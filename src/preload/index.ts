@@ -3,9 +3,6 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-  // Send message to main process
-  test: () => ipcRenderer.invoke('dialog:test'),
-
   prompt: () => ipcRenderer.invoke('completion:prompt'),
   checkDocker: () => ipcRenderer.invoke('docker:check'),
   checkDockerIsRunning: () => ipcRenderer.invoke('docker:checkrunning'),

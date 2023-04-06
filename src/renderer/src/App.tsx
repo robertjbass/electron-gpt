@@ -8,6 +8,8 @@ const App = (): JSX.Element => {
   const checkDocker = async () => {
     console.log('check docker installed')
     const { docker, error } = await window.api.checkDocker()
+    setDockerVersion(docker)
+    setError(error)
     return { docker, error }
   }
 
@@ -19,25 +21,17 @@ const App = (): JSX.Element => {
     return { error, running }
   }
 
+  const startDocker = async () => {
+    console.log('starting docker')
+    const { error, running } = await window.api.startDocker()
+    await checkDockerRunning()
+    return { error, running }
+  }
+
   useEffect(() => {
     checkDocker()
-      .then(({ docker, error }) => {
-        if (error) {
-          setError(error)
-        } else {
-          setDockerVersion(docker)
-          checkDockerRunning()
-            .then(({ error, running }) => {
-              if (error) {
-                setError(error)
-              } else {
-                setDockerRunning(running)
-              }
-            })
-            .catch((err) => console.error(err))
-        }
-      })
-      .catch((err) => console.error(err))
+    checkDockerRunning()
+    startDocker()
   }, [])
 
   return (
