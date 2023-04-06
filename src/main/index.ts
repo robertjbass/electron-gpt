@@ -3,6 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { OpenAiClient } from './openai'
+import { exec } from 'child_process'
 
 import dotenv from 'dotenv'
 dotenv.config()
@@ -43,9 +44,9 @@ const createWindow = (): void => {
     mainWindow = null
   })
 
-  mainWindow.on('blur', () => {
-    mainWindow?.close()
-  })
+  // mainWindow.on('blur', () => {
+  //   mainWindow?.close()
+  // })
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()
@@ -86,6 +87,7 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle('completion:prompt', async (): Promise<any> => {
+    console.log('Prompted')
     try {
       const completion = await openAiClient.createChatCompletion('What is your prime directive?')
       return completion
@@ -94,16 +96,78 @@ app.whenReady().then(() => {
     }
   })
 
+  ipcMain.handle('docker:check', async (): Promise<any> => {
+    const dockerFound: {
+      error: any
+      docker: null | string
+      stdout: string
+    } = {
+      error: null,
+      docker: null,
+      stdout: ''
+    }
+    return new Promise((resolve, _reject) => {
+      exec('docker -v', (error, stdout, _stderr) => {
+        if (error) {
+          // docker not found or error
+
+          resolve({ dockerFound, error, stdout, docker: null })
+        } else {
+          // docker found
+          resolve({ dockerFound, error: false, stdout, docker: stdout })
+        }
+      })
+    })
+  })
+
+  ipcMain.handle('docker:checkrunning', async (): Promise<any> => {
+    const dockerRunning: {
+      error: any
+      running: boolean
+      stdout: string
+    } = {
+      error: null,
+      running: false,
+      stdout: ''
+    }
+    return new Promise((resolve, _reject) => {
+      exec('docker ps', (error, stdout, _stderr) => {
+        if (error) {
+          resolve({ ...dockerRunning, stdout, running: false })
+          // Docker is not installed or there was an error running the command
+        } else {
+          resolve({ ...dockerRunning, stdout, running: true })
+          // Docker is installed
+        }
+      })
+    })
+  })
+
+  ipcMain.handle('docker:start', async (): Promise<any> => {
+    return new Promise((resolve, _reject) => {
+      exec('docker -v', (error, stdout, _stderr) => {
+        console.log({ error, stdout, _stderr })
+        if (error) {
+          resolve({ error: error, docker: false, stdout: stdout })
+          // Docker is not installed or there was an error running the command
+        } else {
+          resolve({ error: error, docker: true, stdout: stdout })
+          // Docker is installed
+        }
+      })
+    })
+  })
+
   createWindow()
 
-  openAiClient
-    .createChatCompletion('What time is it?')
-    .then((response) => {
-      console.log(response)
-    })
-    .catch((error) => {
-      console.error(error)
-    })
+  // openAiClient
+  //   .createChatCompletion('What time is it?')
+  //   .then((response) => {
+  //     console.log(response)
+  //   })
+  //   .catch((error) => {
+  //     console.error(error)
+  //   })
 
   app.on('activate', () => {
     // On macOS it's common to re-create a window in the app when the

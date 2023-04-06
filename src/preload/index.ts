@@ -6,7 +6,10 @@ const api = {
   // Send message to main process
   test: () => ipcRenderer.invoke('dialog:test'),
 
-  prompt: () => ipcRenderer.invoke('completion:prompt')
+  prompt: () => ipcRenderer.invoke('completion:prompt'),
+  checkDocker: () => ipcRenderer.invoke('docker:check'),
+  checkDockerIsRunning: () => ipcRenderer.invoke('docker:checkrunning'),
+  startDocker: () => ipcRenderer.invoke('docker:start')
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
